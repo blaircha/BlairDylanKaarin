@@ -8,17 +8,52 @@ output:
 
 ```{r message=FALSE}
 library(readr)
+library(tidyverse)
+library(ggplot2)
 Dataset <- read_csv("Dataset.csv")
 View(Dataset)
 ```
 
-# Research Question 1:
+# Research Question 1: Which states heavily rely on clean energy sources and which states do not?
 
-# Research Question 2:
+# Research Question 2: What are the top 5 states that produce clean energy and dirty energy?
 
 
 # Tables and Graphs
 ```{r}
+# Question 1
 
+Dataset_1 <- Dataset %>%  
+  mutate(clean=Wind+Hydro+Solar+Biomass,
+         dirty=Coal+Oil+Other) %>% 
+  select(State,clean) %>% 
+  arrange(desc(clean))  
+
+head(Dataset_1, 10)
+
+ggplot(Dataset_1,aes(x=State,y=clean))+
+  geom_col() +
+  labs(x="State",y="Clean Energy Generated")
 ```
+
+```{r}
+# Question 2
+
+Dataset_2 <- Dataset %>%  
+  mutate(clean=Wind+Hydro+Solar+Biomass,
+         dirty=Coal+Oil+Other) %>%
+  select(State, clean) %>%
+  top_n(5, clean) %>% 
+  arrange(desc(clean))
+
+Dataset_3 <- Dataset %>%  
+  mutate(clean=Wind+Hydro+Solar+Biomass,
+         dirty=Coal+Oil+Other) %>%
+  select(State, dirty) %>%
+  top_n(5, dirty) %>% 
+  arrange(desc(dirty))
+Dataset_2
+Dataset_3
+```
+
 
