@@ -7,5 +7,18 @@ output:
 ---
 
 ```{r}
+library(readr)
+Dataset <- read_csv("Dataset.csv")
+View(Dataset)
+```
+
+# Research Question 1:
+
+# Research Question 2:
+
+
+# Tables and Graphs
+```{r}
 
 ```
+
