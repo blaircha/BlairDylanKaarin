@@ -1,0 +1,177 @@
+---
+title: "Data Science Final Project"
+author: "Blair Cha, Kaarin Khandelwal, Dylan Larsen"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=FALSE, echo=FALSE, message = FALSE}
+library(readxl)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(countrycode)
+library(stringr)
+library(wesanderson)
+library(plotly)
+primary_school0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/primary_school.xlsx")
+urban_poverty0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/urban_poverty.xlsx")
+unemployment0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/unemployment.xlsx")
+gdp_capita0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/gdp_capita.xlsx")
+child_mortality0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/child_mortality.xlsx")
+family_workers0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/family_workers.xlsx")
+rural_pop0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/rural_pop.xlsx")
+schooling_cost0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/schooling_cost.xlsx")
+```
+
+```{r, warning=FALSE, echo=FALSE}
+# Reassembling each dataset to longer style
+
+primary_school <- primary_school0 %>%
+  pivot_longer(cols = -country,
+               names_to = "year",
+               values_to="primary_school") %>%
+  mutate(year = as.numeric(year))
+
+
+urban_poverty <- urban_poverty0 %>%
+  pivot_longer(cols = -country,
+               names_to = "year",
+               values_to="urban_poverty") %>%
+    mutate(year = as.numeric(year))
+
+unemployment <- unemployment0 %>%
+  pivot_longer(cols = -country,
+               names_to = "year",
+               values_to="unemployment") %>%
+    mutate(year = as.numeric(year))
+
+gdp_capita <- gdp_capita0 %>%
+  pivot_longer(cols = -country,
+               names_to = "year",
+               values_to="gdp_capita") %>%
+    mutate(year = as.numeric(year))
+
+child_mortality <- child_mortality0 %>%
+  pivot_longer(cols = -country,
+               names_to = "year",
+               values_to="child_mortality") %>%
+    mutate(year = as.numeric(year))
+
+family_workers <- family_workers0 %>%
+  pivot_longer(cols = -country,
+               names_to = "year",
+               values_to="family_workers") %>%
+    mutate(year = as.numeric(year))
+
+rural_pop <- rural_pop0 %>%
+  pivot_longer(cols = -country,
+               names_to = "year",
+               values_to="rural_pop") %>%
+    mutate(year = as.numeric(year))
+
+
+schooling_cost <- schooling_cost0 %>%
+  pivot_longer(cols = -country,
+               names_to = "year",
+               values_to="schooling_cost") %>%
+    mutate(year = as.numeric(year))
+```
+
+```{r, warning=FALSE, echo=FALSE}
+# Joining every dataset to primary_school
+
+primary_school <- primary_school %>%
+  inner_join(urban_poverty, by = c("year","country")) %>%
+  inner_join(unemployment, by = c("year","country")) %>%
+  inner_join(gdp_capita, by = c("year","country")) %>%
+  inner_join(child_mortality, by = c("year","country")) %>%
+  inner_join(family_workers, by = c("year","country")) %>%
+  inner_join(rural_pop, by = c("year","country")) %>%
+  inner_join(schooling_cost, by = c("year","country"))
+```
+
+```{r, warning=FALSE, echo=FALSE}
+# Adding continent variable
+
+newdata <- data.frame(country=primary_school$country)
+newdata$continent <- countrycode(sourcevar = primary_school$country, 
+                                 origin= "country.name", destination= "continent")
+newdata <- newdata %>%
+  select(continent, country) %>%
+  distinct()
+
+primary_school <- primary_school %>%
+  inner_join(newdata, by="country") %>%
+  na.omit()
+
+View(primary_school)
+```
+
+```{r, warning=FALSE, echo=FALSE}
+save(primary_school,file="primary_school.Rda") 
+#load it with load("primary_school.Rda")
+```
+
+# Graphs
+## Relationship between Educational Attainment and GDP per Capita by Continent
+```{r, warning=FALSE, echo=FALSE}
+plot1 <- ggplot(primary_school, aes(x=gdp_capita, y=primary_school, color=continent)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x="GDP per capita", y="Educational Attainment (Primary School)", 
+       title="Educational Attainment and GDP per Capita by Continent")
+
+ggplotly(plot1)
+```
+
+## Relationship between Educational Attainment and Child Mortality Rate by Continent
+```{r, warning=FALSE, echo=FALSE}
+plot2 <- ggplot(primary_school, aes(x=child_mortality, y=primary_school, color=continent))+
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_color_manual(values = wes_palette(n=4, name="Moonrise3")) +
+  labs(x="Child Mortality Rate", y="Educational Attainment (Primary School)", 
+       title="Educational Attainment and Child Mortality Rate by Continent")
+
+ggplotly(plot2)
+```
+
+## Relationship between Educational Attainment and Number of Workers in Family
+```{r, warning=FALSE, echo=FALSE}
+plot3 <- ggplot(primary_school, aes(x=family_workers, y=schooling_cost, color=gdp_capita)) + 
+  geom_point(size=2, alpha=0.7) + 
+  scale_color_gradient(low = "red", high="blue") +
+  labs(x="Number of Workers in Family", y="Educational Attainment (Primary School)", 
+       title="Educational Attainment and Number of Workers in Family", color="GDP per Capita")
+
+ggplotly(plot3)
+```
+
+# Tables
+## Mean Educational Attainment by Continent
+```{r, warning=FALSE, echo=FALSE}
+primary_school %>%
+  group_by(continent) %>%
+  summarize(primary_school_mean = mean(primary_school)) %>%
+  arrange(desc(primary_school_mean))
+```
+
+# Challenges
+1. Coordinating meeting times to work on project!
+
+2. Quality of data and reliability.
+
+# Future Directions
+1. Continue to look for more complete datasets or learn how to deal with missing values.
+
+2. Create a Shinyapp.
+
+3. Research which other variables may affect educational attainment.
