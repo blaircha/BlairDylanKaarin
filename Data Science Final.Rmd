@@ -21,6 +21,8 @@ library(countrycode)
 library(stringr)
 library(wesanderson)
 library(plotly)
+library(ggmap)
+library(ggthemes)
 primary_school0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/primary_school.xlsx")
 urban_poverty0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/urban_poverty.xlsx")
 unemployment0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/unemployment.xlsx")
@@ -88,7 +90,7 @@ schooling_cost <- schooling_cost0 %>%
 ```{r, warning=FALSE, echo=FALSE}
 # Joining every dataset to primary_school
 
-primary_school <- primary_school %>%
+primary_school1 <- primary_school %>%
   inner_join(urban_poverty, by = c("year","country")) %>%
   inner_join(unemployment, by = c("year","country")) %>%
   inner_join(gdp_capita, by = c("year","country")) %>%
@@ -104,15 +106,18 @@ primary_school <- primary_school %>%
 newdata <- data.frame(country=primary_school$country)
 newdata$continent <- countrycode(sourcevar = primary_school$country, 
                                  origin= "country.name", destination= "continent")
-newdata <- newdata %>%
+newdata1 <- newdata %>%
   select(continent, country) %>%
   distinct()
 
-primary_school <- primary_school %>%
-  inner_join(newdata, by="country") %>%
-  na.omit()
+primary_school <- primary_school1 %>%
+  inner_join(newdata1, by="country") %>%
+  mutate(decade = floor(year/10)*10) %>%
+  drop_na(primary_school) 
 
 View(primary_school)
+
+# Suggestions: 1) make some variables categorical (category can be "missing value") 2) don't use variables with too many NAs 3) select range of years 4) find other new variables 
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
@@ -137,7 +142,7 @@ ggplotly(plot1)
 plot2 <- ggplot(primary_school, aes(x=child_mortality, y=primary_school, color=continent))+
   geom_point() + 
   geom_smooth(method = "lm", se = FALSE) +
-  scale_color_manual(values = wes_palette(n=4, name="Moonrise3")) +
+  scale_color_manual(values = wes_palette(n=5, name="Moonrise3")) +
   labs(x="Child Mortality Rate", y="Educational Attainment (Primary School)", 
        title="Educational Attainment and Child Mortality Rate by Continent")
 
@@ -155,6 +160,67 @@ plot3 <- ggplot(primary_school, aes(x=family_workers, y=schooling_cost, color=gd
 ggplotly(plot3)
 ```
 
+## Timeline Graph 1 
+```{r}
+primary_school %>%
+  group_by(continent, year) %>%
+  summarize(average = mean(primary_school)) %>%
+  ggplot(aes(x=year,y=average, color=continent)) + 
+  geom_point() + 
+  geom_line() + 
+  labs(x="Year", y="Average Rate of Educational Attainment", 
+       title = "Educational Attainment over Time by Continent")
+```
+
+## Investigating Oceania
+```{r}
+primary_school %>%
+  filter(continent == "Oceania") %>%
+  
+  
+```
+
+## Map of World Educational Attainment
+```{r}
+world <- primary_school %>%
+  distinct(country)
+
+map.world <- map_data("world")
+
+world %>% 
+  ggplot() +
+  geom_map(data = map.world, map = map.world, 
+           aes(map_id = region), fill = "white", color = "black") + 
+  geom_map(aes(map_id = country), map = map.world) +
+  expand_limits(x = map.world$long, y = map.world$lat) + # scale for fill
+  theme_map() 
+
+
+
+
+
+worldmap <- get_stamenmap(
+    bbox = c(left = -180, bottom = -57, right = 179, top = 82.1), 
+    maptype = "toner-background",
+    zoom = 2
+)
+
+ggmap(worldmap)
+```
+
+
+
+```{r}
+primary_school %>%
+  filter(decade == 1990) %>%
+  group_by(decade, country) %>%
+  summarize(average = mean(child_mortality)) %>%
+  arrange(desc(average)) %>%
+  filter(country==c("Niger", "Costa Rica")) 
+```
+
+
+
 # Tables
 ## Mean Educational Attainment by Continent
 ```{r, warning=FALSE, echo=FALSE}
@@ -164,14 +230,8 @@ primary_school %>%
   arrange(desc(primary_school_mean))
 ```
 
-# Challenges
-1. Coordinating meeting times to work on project!
 
-2. Quality of data and reliability.
 
-# Future Directions
-1. Continue to look for more complete datasets or learn how to deal with missing values.
 
-2. Create a Shinyapp.
 
-3. Research which other variables may affect educational attainment.
+
