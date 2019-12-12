@@ -23,6 +23,8 @@ library(wesanderson)
 library(plotly)
 library(ggmap)
 library(ggthemes)
+library(broom)
+
 primary_school0 <- read_excel("primary_school.xlsx")
 urban_poverty0 <- read_excel("urban_poverty.xlsx")
 unemployment0 <- read_excel("unemployment.xlsx")
@@ -31,6 +33,9 @@ child_mortality0 <- read_excel("child_mortality.xlsx")
 family_workers0 <- read_excel("family_workers.xlsx")
 rural_pop0 <- read_excel("rural_pop.xlsx")
 schooling_cost0 <- read_excel("schooling_cost.xlsx")
+freedom0 <- read_excel("freedom.xlsx")
+gini0 <- read_excel("gini_coefficient.xlsx")
+gender0 <- read_excel("gender_ratio.xlsx")
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
@@ -85,6 +90,27 @@ schooling_cost <- schooling_cost0 %>%
                names_to = "year",
                values_to="schooling_cost") %>%
     mutate(year = as.numeric(year))
+
+
+freedom <- freedom0 %>%
+  pivot_longer(cols = -country,
+              names_to = "year",
+              values_to="freedom") %>%
+  mutate(year = as.numeric(year))
+
+
+gini <- gini0 %>%
+  pivot_longer(cols = -country,
+              names_to = "year",
+              values_to="gini") %>%
+  mutate(year = as.numeric(year))
+
+
+gender <- gender0 %>%
+  pivot_longer(cols = -country,
+              names_to = "year",
+              values_to="gender_ratio") %>%
+  mutate(year = as.numeric(year))
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
@@ -97,7 +123,10 @@ primary_school1 <- primary_school %>%
   inner_join(child_mortality, by = c("year","country")) %>%
   inner_join(family_workers, by = c("year","country")) %>%
   inner_join(rural_pop, by = c("year","country")) %>%
-  inner_join(schooling_cost, by = c("year","country"))
+  inner_join(schooling_cost, by = c("year","country")) %>%
+  inner_join(freedom, by = c("year","country")) %>%
+  inner_join(gini, by = c("year","country")) %>%
+  inner_join(gender, by = c("year","country")) 
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
@@ -253,6 +282,9 @@ save(country_list,file="country_list.Rda")
   
 ```
 
+```{r}
+
+```
 
 
 
