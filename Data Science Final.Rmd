@@ -23,14 +23,14 @@ library(wesanderson)
 library(plotly)
 library(ggmap)
 library(ggthemes)
-primary_school0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/primary_school.xlsx")
-urban_poverty0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/urban_poverty.xlsx")
-unemployment0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/unemployment.xlsx")
-gdp_capita0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/gdp_capita.xlsx")
-child_mortality0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/child_mortality.xlsx")
-family_workers0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/family_workers.xlsx")
-rural_pop0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/rural_pop.xlsx")
-schooling_cost0 <- read_excel("/Users/hyejeongcha/Documents/Data science final project/schooling_cost.xlsx")
+primary_school0 <- read_excel("primary_school.xlsx")
+urban_poverty0 <- read_excel("urban_poverty.xlsx")
+unemployment0 <- read_excel("unemployment.xlsx")
+gdp_capita0 <- read_excel("gdp_capita.xlsx")
+child_mortality0 <- read_excel("child_mortality.xlsx")
+family_workers0 <- read_excel("family_workers.xlsx")
+rural_pop0 <- read_excel("rural_pop.xlsx")
+schooling_cost0 <- read_excel("schooling_cost.xlsx")
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
@@ -172,13 +172,6 @@ primary_school %>%
        title = "Educational Attainment over Time by Continent")
 ```
 
-## Investigating Oceania
-```{r}
-primary_school %>%
-  filter(continent == "Oceania") %>%
-  
-  
-```
 
 ## Map of World Educational Attainment
 ```{r}
@@ -230,7 +223,35 @@ primary_school %>%
   arrange(desc(primary_school_mean))
 ```
 
+```{r}
+primary_school <- primary_school %>%
+  mutate(high_gdp = gdp_capita > 3955) 
+```
 
+```{r}
+# scatterplots to find interactions between variables
+ggplot(primary_school, aes(x=gdp_capita, y=unemployment, color=high_gdp)) + geom_point()
+
+
+# linear regression
+library(broom)
+tidy(lm(primary_school ~ high_gdp + unemployment, data=primary_school))
+
+tidy(lm(primary_school ~ gdp_capita + unemployment + child_mortality, data=primary_school))
+
+tidy(lm(primary_school ~ gdp_capita + unemployment + rural_pop, data=primary_school))
+
+# an interaction effect will let one variable affect the other. Doesn't mean that the two variables are related
+# coeff 0 -> no relationship
+# less variables to fit b/c NA
+
+country_list <- primary_school %>% 
+  select(1:1) %>%
+  distinct() 
+
+save(country_list,file="country_list.Rda") 
+  
+```
 
 
 
