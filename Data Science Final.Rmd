@@ -283,7 +283,11 @@ save(country_list,file="country_list.Rda")
 ```
 
 ```{r}
-
+primary_school %>%
+  ggplot(aes(x=year, y=primary_school, color=high_gdp)) + 
+  geom_jitter() +
+  facet_wrap(~ high_gdp) +
+  geom_smooth(se=FALSE)
 ```
 
 
