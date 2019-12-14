@@ -129,18 +129,6 @@ save(primary_school,file="primary_school.Rda")
 
 ## Relationship between Educational Attainment and GDP per Capita
 
-```{r}
-plot <- ggplot(primary_school, aes(x=gdp_capita, y=primary_school, color=high_gdp)) + 
-  geom_point() + 
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(x="GDP per capita", y="Educational Attainment (Primary School)", 
-       title="Educational Attainment and GDP per Capita by Continent")
-
-ggplotly(plot)
-
-```
-
-ggplotly(plot1)
 
 ## Relationship between Educational Attainment and GDP per Capita by Continent
 ```{r, warning=FALSE, echo=FALSE}
@@ -307,5 +295,24 @@ primary_school %>%
   geom_smooth(se=FALSE)
 ```
 
+```{r}
+plot <- ggplot(primary_school, aes(x=gdp_capita, y=primary_school, color=high_gdp)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x="GDP per capita", y="Educational Attainment (Primary School)", 
+       title="Educational Attainment and GDP per Capita by Continent")
 
+ggplotly(plot)
+
+```
+
+##Schooling Cost Graph
+
+```{r}
+ggplot(primary_school,aes(x=schooling_cost,y=primary_school, color=high_gdp))+
+  geom_point()+
+  geom_smooth(method="lm", se=FALSE)
+```
+
+## Gini 
 
