@@ -366,3 +366,12 @@ ggplot(primary_school,aes(x=schooling_cost,y=primary_school, color=high_gdp))+
   geom_smooth(method="lm", se=FALSE)
 ```
 
+
+## Gini Ratio
+```{r}
+ggplot(primary_school,aes(x=gini,y=primary_school, color=high_gdp))+
+  geom_point()+
+  geom_smooth(method="lm", se=FALSE)
+```
+
+
