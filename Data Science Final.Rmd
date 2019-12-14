@@ -23,6 +23,8 @@ library(wesanderson)
 library(plotly)
 library(ggmap)
 library(ggthemes)
+library(broom)
+
 primary_school0 <- read_excel("primary_school.xlsx")
 urban_poverty0 <- read_excel("urban_poverty.xlsx")
 unemployment0 <- read_excel("unemployment.xlsx")
@@ -31,6 +33,9 @@ child_mortality0 <- read_excel("child_mortality.xlsx")
 family_workers0 <- read_excel("family_workers.xlsx")
 rural_pop0 <- read_excel("rural_pop.xlsx")
 schooling_cost0 <- read_excel("schooling_cost.xlsx")
+freedom0 <- read_excel("freedom.xlsx")
+gini0 <- read_excel("gini_coefficient.xlsx")
+gender0 <- read_excel("gender_ratio.xlsx")
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
@@ -85,6 +90,27 @@ schooling_cost <- schooling_cost0 %>%
                names_to = "year",
                values_to="schooling_cost") %>%
     mutate(year = as.numeric(year))
+
+
+freedom <- freedom0 %>%
+  pivot_longer(cols = -country,
+              names_to = "year",
+              values_to="freedom") %>%
+  mutate(year = as.numeric(year))
+
+
+gini <- gini0 %>%
+  pivot_longer(cols = -country,
+              names_to = "year",
+              values_to="gini") %>%
+  mutate(year = as.numeric(year))
+
+
+gender <- gender0 %>%
+  pivot_longer(cols = -country,
+              names_to = "year",
+              values_to="gender_ratio") %>%
+  mutate(year = as.numeric(year))
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
@@ -97,7 +123,10 @@ primary_school1 <- primary_school %>%
   inner_join(child_mortality, by = c("year","country")) %>%
   inner_join(family_workers, by = c("year","country")) %>%
   inner_join(rural_pop, by = c("year","country")) %>%
-  inner_join(schooling_cost, by = c("year","country"))
+  inner_join(schooling_cost, by = c("year","country")) %>%
+  inner_join(freedom, by = c("year","country")) %>%
+  inner_join(gini, by = c("year","country")) %>%
+  inner_join(gender, by = c("year","country")) 
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
@@ -128,7 +157,6 @@ save(primary_school,file="primary_school.Rda")
 # Graphs
 
 ## Relationship between Educational Attainment and GDP per Capita
-
 
 ## Relationship between Educational Attainment and GDP per Capita by Continent
 ```{r, warning=FALSE, echo=FALSE}
@@ -257,25 +285,27 @@ save(country_list,file="country_list.Rda")
   
 ```
 
-```{r}
 
+```{r}
 ## Map of World Educational Attainment
-world <- primary_school %>%
-  filter(year==c("2014","2015")) %>% 
-  distinct(country)
+mapdata <- primary_school %>%
+  arrange(desc(year)) %>%
+  drop_na(gdp_capita) %>%
+  group_by(country) %>%
+  top_n(1, wt=year)
+
 
 map.world <- map_data("world")
 
-world %>% 
+mapdata %>% 
   ggplot() +
   geom_map(data = map.world, map = map.world, 
            aes(map_id = region), fill = "white", color = "black") + 
   geom_map(aes(map_id = country), map = map.world) +
+  geom_map(map = map.world, 
+           aes(map_id = country, fill = high_gdp), color = "black") + 
   expand_limits(x = map.world$long, y = map.world$lat) + # scale for fill
   theme_map() 
-
-
-
 
 
 worldmap <- get_stamenmap(
@@ -283,16 +313,38 @@ worldmap <- get_stamenmap(
     maptype = "toner-background",
     zoom = 2
 )
-
 ggmap(worldmap)
+
+
+# chloropleth style by gdp or use high vs low gdp variables
+# Pull most recent year for countries --> get rid of years with missing values, arrange_desc(year), 
+# 5-6 plots are reasonable 
+# Quality over quantity 
 ```
+
 
 ```{r}
 primary_school %>%
   ggplot(aes(x=year, y=primary_school, color=high_gdp)) + 
   geom_jitter() +
   facet_wrap(~ high_gdp) +
-  geom_smooth(se=FALSE)
+  geom_smooth(se=FALSE) + 
+  labs(x="Year", y="Educational Attainment", title = "Comparison of Educational Attainment between countries with high and low GDP per capita")
+```
+```{r}
+primary_school %>%
+  ggplot(aes(x=year, y=primary_school, color=high_gdp)) + 
+  geom_jitter() +
+  facet_wrap(~ continent) +
+  geom_smooth(se=FALSE) + 
+  labs(x="Year", y="Educational Attainment", title = "Comparison of Educational Attainment between countries with high and low GDP per capita")
+```
+# Table
+```{r}
+primary_school %>%
+  group_by(continent) %>%
+  summarize(mean_gdp = mean(gdp_capita)) %>%
+  arrange(desc(mean_gdp))
 ```
 
 ```{r}
@@ -313,6 +365,4 @@ ggplot(primary_school,aes(x=schooling_cost,y=primary_school, color=high_gdp))+
   geom_point()+
   geom_smooth(method="lm", se=FALSE)
 ```
-
-## Gini 
 
