@@ -1,11 +1,12 @@
 ---
-title: "Data Science Final Project"
+title: "Investigating the Best Predictors of Educational Attainment Across Nations"
 author: "Blair Cha, Kaarin Khandelwal, Dylan Larsen"
 output:
   html_document:
     df_print: paged
   html_notebook: default
   pdf_document: default
+bibliography: Library.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -142,16 +143,45 @@ save(primary_school,file="primary_school.Rda")
 #load it with load("primary_school.Rda")
 ```
 
+```{r, warning=FALSE, echo=FALSE, message=FALSE, include=FALSE}
+library(xtable)
+options(xtable.floating = FALSE)
+options(xtable.timestamp = "")
+
+var <- data.frame(
+  Variable = c("Country", "Year", "Primary School", "Urban Poverty", "Unemployment", "GDP per Capita", "Child Mortality", "Family Workers", "Rural Population", "Schooling Cost", "Freedom", "Gini Coefficient", "Gender Ratio", "Continent", "Decade", "High GDP"), 
+                       
+Definition = c("Name of each country", "Year from 1995 to 2015", "Number of new entrants in the last grade of primary education, regardless of age, divided by the population at the entrance age for the last grade", "Percentage of the urban population living below the national poverty lines", "Percentage of total population, age group above 15, that has been registered as unemployed during the given year", "Gross domestic product", "Death of children under five years of age per 1,000 live births", "Percentage of all employment that works as contributing family workers", "Number of people that live in the rural area", "Expenditure per student, primary school", "Average of political rights and civil liberties ratings", "Income inequality in a society", "Male births per female births", "Continent that each country belongs to", "Decade between 1995-2015", "Countries with GDP > 3,955 is categorized as high GDP countries"),
+
+Unit = c("Country", "Year", "% of relevant age group", " % urban people below national urban poverty line", "Aged 15+ unemployment rate (%)", "Per capita in 1,000 U.S. dollar", "0-5 year olds dying per 1,000 born", "% of employment", "Population count", "% of GDP per person", "1- most free, 7- least free", "Higher number means more inequality", "Male births per female births", "Continent", "1990, 2000, 2010", "TRUE, FALSE"))
+
+colnames(var)[3] <- paste(var[, 3], collapse = "") 
+
+xtable(var)
+```
+
+
 ## Introduction
+
+The theory that human capital in the form of education is a significant factor for economic growth is one that economists have been continuously investigating [@barro_lee_1993]. Barro and Lee state that female educational attainment has a positive, significant relationship with GDP per capita. Given that there are more males in the workforce than females, gender ratio may be an interesting predictor to explore regarding educational attainment and GDP per capita. Another interesting observation made by researchers is that children of higher cultural and social class families are more likely to gain educational credentials [@sullivan2001cultural]. Thus, various aspects of inequality and families’ ability to afford schooling cost may be a subject to investigate regarding their effects on educational attainment. [@byun2012rural] further discovered that rural students had more advantages in achieving a bachelor’s degree education compared to non-rural students in terms of having more social resources, even after controlling for individual family background, demographic background, and academic preparation. This shines some light on dissolving, to an extent, the complexity of the ongoing rural-nonrural disparities. Following Brun. S, et all (2012)’s observation, we thought that rural population and urban poverty would be important variables to include in our research.
+
+The goal of our study is to contribute to the researchers’ work above and further explore the effects of the proven variables in the global level. We first discuss our method of collecting necessary variables and how we compiled our final dataset. Then, we present multiple plots (timeline plots, scatterplots, map of the world, etc) that showed any kind of noteworthy relationship with educational attainment. We also generate a shiny app where one can select a year, an explanatory variable, and view the level of primary educational attainment across the world. Lastly, we discuss some challenges that we overcame, limitations, and future directions of research. 
 
 
 ## Research Question
 
+**What are the explanatory variables that best explain cross-country level of educational attainment?**
+
 
 ## Our Data
 
+The fundamental part of our data is from gapminder.com [@gapminder], a website with comprehensive cross-country data from various trustworthy sources, such as the World Bank [@dang_barne_hadi_baffes_2019]. In order to measure the level of educational attainment, we select the primary school completion data as our response variable. A full definition and unit of each variable is summarized in the table below. We collected data for all variables and transformed each of them into a longer form with pivoting. Then, we inner joined them into the primary school variable dataset. The continent variable was created via R package and added to the primary school dataset. The decade and high GDP variables were created via mutating based on their definitions in the variable descriptions table.
+
+![Variable Description](/Users/hyejeongcha/Documents/Data science final project/varlist.png)
+
+
 ### World Map of All Countries in our Dataset 
-```{r}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 world <- primary_school %>%
   distinct(country)
 
@@ -162,23 +192,22 @@ world %>%
   geom_map(data = map.world, map = map.world, 
            aes(map_id = region), fill = "white", color = "black") + 
   geom_map(aes(map_id = country), map = map.world) +
-  expand_limits(x = map.world$long, y = map.world$lat) + # scale for fill
+  expand_limits(x = map.world$long, y = map.world$lat) + 
   theme_map() 
-
-worldmap <- get_stamenmap(
-    bbox = c(left = -180, bottom = -57, right = 179, top = 82.1), 
-    maptype = "toner-background",
-    zoom = 2
-)
-
-ggmap(worldmap)
 ```
+
+We have a total of 71 countries in our dataset, and the distribution of the countries are shown in the world map.
+
+![World Map from Our World in Data](/Users/hyejeongcha/Desktop/primary_world.png)
+
+Our World in Data [@roser_ortiz-ospina_2016] actually made the same world map of their 2015 global data of primary school education attainment graph. One of our challenges was having such a small dataset, but since our dataset looks similar to that of a reliable source, we decided to keep using the primary school dataset. 
 
 
 ## Visual Analysis
 
 ### Timeline Graph of Educational Attainment over Time by Continent
-```{r}
+
+```{r, warning=FALSE, echo=FALSE}
 primary_school %>%
   group_by(continent, year) %>%
   dplyr::summarize(average = mean(primary_school)) %>%
@@ -186,28 +215,78 @@ primary_school %>%
   geom_point() + 
   geom_line() + 
   labs(x="Year", y="Average Rate of Educational Attainment", 
-       title = "Educational Attainment over Time by Continent")
+       title = "Educational Attainment over Time by Continent",
+       color="Continent")
 ```
+
+The plot above shows a timeline of educational attainment by continent from 1995 to 2015. Looking at the data, we see that Oceania and Europe had relatively high educational attainment levels over the two decades. The Americas increased at a steady rate, while Asia saw a drastic increase between 1999 and 2002. Educational attainment in Africa lagged other continents by a large margin in 1995. While the continent has steadily improved its educational attainment levels over the two decades, it still lagged other continents in 2015. 
+
+
 
 ### Shinyapp
 
+[Link to Shinyapp](https://dylanlarsen.shinyapps.io/Datascience_Project/)
+
+We created a shiny app where someone can select a year between 1995 and 2015, which encompasses our data, and an independent variable such as GDP per capita that can help explain primary educational attainment. 
 
 ### Relationship between Educational Attainment and GDP per Capita
 
+```{r, warning=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+plot <- ggplot(primary_school, aes(x=gdp_capita, y=primary_school)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE) +
+  labs(x="GDP per Capita", y="Educational Attainment (Primary School)", 
+       title="Educational Attainment and GDP per Capita")
+
+ggplotly(plot)
+```
+
+From the plot above, we can see that the relationship between educational attainment and GDP initially increases exponentially. However, after a certain point, educational attainment levels out compared with GDP per capita. This implies that at low GDP per capita levels, a marginal increase in GDP per capita leads to an increase in educational outcomes. On the other hand, at higher GDP per capita levels, an increase in GDP per capita has almost no impact on educational attainment. It is fair to assume that countries with high GDP per capita have greater disposable income to spend on education. However, after a certain point, spending more on education does not necessarily imply better outcomes, especially when educational attainment in countries with high GDP per capita levels is already pretty high. 
 
 ### Relationship between Educational Attainment and GDP per Capita by Continent
+
 ```{r, warning=FALSE, echo=FALSE}
 plot1 <- ggplot(primary_school, aes(x=gdp_capita, y=primary_school, color=continent)) + 
   geom_point() + 
   geom_smooth(method = "lm", se = FALSE) +
-  labs(x="GDP per capita", y="Educational Attainment (Primary School)", 
-       title="Educational Attainment and GDP per Capita by Continent")
+  labs(x="GDP per Capita", y="Educational Attainment (Primary School)", 
+       title="Educational Attainment and GDP per Capita by Continent",color="Continent")
 
 ggplotly(plot1)
 ```
 
+When we expand the graph above that shows the relationship between Educational Attainment and GDP per Capita to the continent level, we observe similar results. There is a general trend of increasing level of educational attainment as GDP per Capita increases. For low GDP per Capita countries, there is a steeper increase in educational attainment per one unit of increase in GDP per Capita compared to high GDP per Capita countries. We observe some outliers for countries in Asia with unusually high educational attainment above all the continent mean linear estimates of educational attainment, and we observe the opposite for the outlier countries in Africa.
+
+### Comparison of Educational Attainment between countries with high and low GDP per capita
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+primary_school %>%
+  ggplot(aes(x=year, y=primary_school, color=high_gdp)) + 
+  geom_jitter() +
+  facet_wrap(~ high_gdp) +
+  geom_smooth(se=FALSE) + 
+  labs(x="Year", y="Educational Attainment", title = "Comparison of Educational Attainment between All Countries", color="High GDP")
+```
+
+The faceted plots above show the relationship between Educational attainment levels and GDP per capita by their classification (high GDP/low GDP). On the low GDP plot, we see that the average educational attainment in 1995 was lower than 50%, and by 2015 that number had risen to almost 75%. In contrast, in 1995, high GDP countries had educational attainment levels of roughly 80%, and this number increased slightly in the coming two decades. This plot confirms the findings of the Educational Attainment vs. GDP per Capita plot we saw earlier. GDP per is significant in predicting educational attainment at lower levels, but its influence as a predictor decreases as its value increases. 
+
+
+### Comparison of Educational Attainment between countries with high and low GDP per capita by Continent
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+primary_school %>%
+  ggplot(aes(x=year, y=primary_school, color=high_gdp)) + 
+  geom_jitter() +
+  facet_wrap(~ continent) +
+  geom_smooth(se=FALSE) + 
+  labs(x="Year", y="Educational Attainment", title = "Comparison of Educational Attainment between Continents", color="High GDP") 
+```
+
+You can see that for some continents there is a distinct difference in educational attainment between high and low gdp countries, like Africa and Asia. In Europe and the Americas there is not much of a difference between the two groups.
+
+
 ### World Map of High vs Low GDP Countries
-```{r}
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
 mapdata <- primary_school %>%
   arrange(desc(year)) %>%
   drop_na(gdp_capita) %>%
@@ -224,81 +303,84 @@ mapdata %>%
   geom_map(aes(map_id = country), map = map.world) +
   geom_map(map = map.world, 
            aes(map_id = country, fill = high_gdp), color = "black") + 
-  expand_limits(x = map.world$long, y = map.world$lat) + # scale for fill
-  theme_map() 
-
-
-worldmap <- get_stamenmap(
-    bbox = c(left = -180, bottom = -57, right = 179, top = 82.1), 
-    maptype = "toner-background",
-    zoom = 2
-)
-ggmap(worldmap)
+  expand_limits(x = map.world$long, y = map.world$lat) + 
+  theme_map() +
+  labs(fill = "High GDP")
 ```
+
+The map above shows the classification of countries in our dataset by high GDP and low GDP. Countries with a GDP per capita over 3,995 were classified as high GDP countries and those with GDP per capitas below the 3,995 threshold were classified as low GDP countries. Based on World Bank income classifications, we chose this threshold [@world_bank_blogs].
+
 
 ### Relationship between Educational Attainment and Schooling Cost
 
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+plot5 <- ggplot(primary_school, aes(x=schooling_cost, y=primary_school))+
+  geom_point() + 
+  geom_smooth(se = FALSE) +
+  labs(x="Schooling Cost", y="Educational Attainment (Primary School)", 
+       title="Educational Attainment and Schooling Cost")
 
-### Relationship between Educational Attainment and Gini Coefficient
+ggplotly(plot5)
+
+ggplot(primary_school,aes(x=gdp_capita,y=schooling_cost,color=continent))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE) + 
+  labs(x="Schooling Cost", y="GDP per Capita", title="Relationship between Educational Attainment and Schooling Cost", color="Continent")
+```
+
+The plot above shows the relationship between educational attainment and schooling cost. From the plot, we can see that the relationship between the two variables is fairly linear. This suggests that schooling cost has little impact on educational attainment. While this result may seem counterintuitive at first, on further analysis it begins to make more sense. The second plot shows us the relationship between GDP per capita and schooling cost by continent. Ignoring Europe and Oceania (since they have very few observations), we see that as GDP per capita increases, so does schooling cost. Countries with high GDP per capitas have higher schooling costs because they can afford to spend more on education. However, does not necessarily translate to better educational outcomes. 
 
 
 ### Relationship between Educational Attainment and Child Mortality Rate by Continent
-```{r, warning=FALSE, echo=FALSE}
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
 plot2 <- ggplot(primary_school, aes(x=child_mortality, y=primary_school, color=continent))+
   geom_point() + 
   geom_smooth(method = "lm", se = FALSE) +
-  scale_color_manual(values = wes_palette(n=5, name="Moonrise3")) +
   labs(x="Child Mortality Rate", y="Educational Attainment (Primary School)", 
-       title="Educational Attainment and Child Mortality Rate by Continent")
+       title="Educational Attainment and Child Mortality Rate by Continent",
+       color="Continent")
 
 ggplotly(plot2)
 ```
 
+We used data on child mortality as a proxy for children’s health outcomes. From the plot above, we can see that child mortality significantly affects educational attainment levels across all continents in our dataset. This indicates that children’s health outcomes are a significant predictor of educational outcomes 
+
+
 ### Relationship between Educational Attainment and Number of Workers in Family
-```{r, warning=FALSE, echo=FALSE}
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
 plot3 <- ggplot(primary_school, aes(x=family_workers, y=schooling_cost, color=gdp_capita)) + 
   geom_point(size=2, alpha=0.7) + 
-  scale_color_gradient(low = "red", high="blue") +
+  scale_color_gradient(low = "red", high="yellow") +
   labs(x="Number of Workers in Family", y="Educational Attainment (Primary School)", 
        title="Educational Attainment and Number of Workers in Family", color="GDP per Capita")
 
 ggplotly(plot3)
 ```
 
-### Comparison of Educational Attainment between countries with high and low GDP per capita
-```{r}
-primary_school %>%
-  ggplot(aes(x=year, y=primary_school, color=high_gdp)) + 
-  geom_jitter() +
-  facet_wrap(~ high_gdp) +
-  geom_smooth(se=FALSE) + 
-  labs(x="Year", y="Educational Attainment", title = "Comparison of Educational Attainment between countries with high and low GDP per capita")
-```
+Here we observe that most countries with a high GDP per Capita are clustered near the bottom left, meaning they have a low number of workers in the family. An interesting observation is some countries with low educational attainment has over 40 workers in a family.
 
-### Comparison of Educational Attainment between countries with high and low GDP per capita by Continent
-```{r}
-primary_school %>%
-  ggplot(aes(x=year, y=primary_school, color=high_gdp)) + 
-  geom_jitter() +
-  facet_wrap(~ continent) +
-  geom_smooth(se=FALSE) + 
-  labs(x="Year", y="Educational Attainment", title = "Comparison of Educational Attainment between countries with high and low GDP per capita by Continent")
-```
 
 ### Table of GDP vs. Educational Attainment by Continent
-```{r}
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
 primary_school %>%
   group_by(continent) %>%
   dplyr::summarize(mean_gdp = mean(gdp_capita)) %>%
   arrange(desc(mean_gdp))
 ```
 
+Here is a table that shows the average gdp per capita for the different continents, with no surprise that that the americas have the highest average gdp per capita while Africa has the lowest. Note that many of the high gdp countries of Europe aren’t included in this dataset, so this would drop their average gdp per capita.
 
 ## Conclusion
 
+There were many challenges we faced during the project. The first big one was scheduling, given that our group was split between two sections, and we all had very different and full schedules. However, we all made our best efforts to make time to produce a meaningful research project. Another problem we ran into was the data. Mainly all the missing values we had was because different countries reported different values for variables in different years. This is discussed above in the data section.
+
+We created a shiny app where one can select a year between 1995 and 2015, which encompasses our data, and an independent variable that can help explain primary educational attainment. One limitation is that our shiny app is incompatible with our gender variable, and we did not have enough time to investigate the reason, so we removed the gender variable from the list of possible variables one could select. 
+
+In the future, we would like to expand the shiny app to incorporate different models and different methods to explore the different variables. We would also like to find a more complete dataset or use a proxy variable that can be an indicator for educational attainment other than primary school attainment variable so that we would be able to achieve more accurate predictors when we run regression analysis. For this project, we did not perform a regression analysis due to the nature of the class and since we wanted to utilize the data wrangling skills we learned in class. However, performing hypothesis testing to determine which variables would be the best predictors of educational attainment would be an interesting future project. 
 
 
 ## References
-
-
 
