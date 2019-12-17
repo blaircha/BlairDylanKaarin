@@ -375,6 +375,8 @@ Here is a table that shows the average gdp per capita for the different continen
 
 ## Conclusion
 
+Overall, we find that GDP per Capita may play a significant role in the level of Educational Attainemnt for individual countries. Countries with a lower level of GDP per capita have generally a lower level of educational attainment compared to high-earning countries, and have a steeper growth in educational attainment per one unit increase in GDP per capita. In contrast, countries with a high nubmer of GDP have a slower growth of educational attainment levels per one unit increase in GDP per capita. 
+
 There were many challenges we faced during the project. The first big one was scheduling, given that our group was split between two sections, and we all had very different and full schedules. However, we all made our best efforts to make time to produce a meaningful research project. Another problem we ran into was the data. Mainly all the missing values we had was because different countries reported different values for variables in different years. This is discussed above in the data section.
 
 We created a shiny app where one can select a year between 1995 and 2015, which encompasses our data, and an independent variable that can help explain primary educational attainment. One limitation is that our shiny app is incompatible with our gender variable, and we did not have enough time to investigate the reason, so we removed the gender variable from the list of possible variables one could select. 
